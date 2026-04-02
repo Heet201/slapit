@@ -120,12 +120,17 @@ const Admin = () => {
     e.preventDefault();
     try {
       if (editingProduct) {
-        await apiService.updateProduct(editingProduct.id, productForm);
+        const productRef = doc(db, 'products', editingProduct.id);
+        await updateDoc(productRef, {
+          ...productForm,
+          updatedAt: serverTimestamp()
+        });
       } else {
-        await apiService.createProduct({
+        await addDoc(collection(db, 'products'), {
           ...productForm,
           rating: 4.5,
-          reviews: 0
+          reviews: 0,
+          createdAt: serverTimestamp()
         });
       }
       setIsModalOpen(false);
@@ -140,24 +145,31 @@ const Admin = () => {
       });
     } catch (error) {
       console.error("Error adding/updating product:", error);
+      alert("Failed to save product. Check console for details.");
     }
   };
 
   const handleDeleteProduct = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
-        await apiService.deleteProduct(id);
+        await deleteDoc(doc(db, 'products', id));
       } catch (error) {
         console.error("Error deleting product:", error);
+        alert("Failed to delete product. Check console for details.");
       }
     }
   };
 
   const handleUpdateOrderStatus = async (orderId: string, status: string) => {
     try {
-      await apiService.updateOrderStatus(orderId, status);
+      const orderRef = doc(db, 'orders', orderId);
+      await updateDoc(orderRef, {
+        status,
+        updatedAt: serverTimestamp()
+      });
     } catch (error) {
       console.error("Error updating order status:", error);
+      alert("Failed to update order status.");
     }
   };
 
