@@ -64,7 +64,7 @@ const Admin = () => {
         if (userDoc.exists() && userDoc.data().role === 'admin') {
           setIsAdmin(true);
           setLoading(false);
-        } else if (user.email === "dhruvidhameliya01@gmail.com") {
+        } else if (user.email === "dhruvidhameliya01@gmail.com" || user.email === "dhameliyaheet201@gmail.com") {
           // Default admin check
           setIsAdmin(true);
           setLoading(false);

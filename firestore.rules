@@ -50,7 +50,8 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() && 
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-         (request.auth.token.email == "dhruvidhameliya01@gmail.com" && request.auth.token.email_verified == true));
+         (request.auth.token.email == "dhruvidhameliya01@gmail.com" && request.auth.token.email_verified == true) ||
+         (request.auth.token.email == "dhameliyaheet201@gmail.com" && request.auth.token.email_verified == true));
     }
 
     function isValidProduct(data) {

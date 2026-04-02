@@ -34,7 +34,7 @@ const Login = () => {
         await updateProfile(userCredential.user, { displayName: name });
         
         // Create user doc
-        const isAdmin = userCredential.user.email === "dhruvidhameliya01@gmail.com";
+        const isAdmin = userCredential.user.email === "dhruvidhameliya01@gmail.com" || userCredential.user.email === "dhameliyaheet201@gmail.com";
         await setDoc(doc(db, 'users', userCredential.user.uid), {
           uid: userCredential.user.uid,
           email: userCredential.user.email,
@@ -55,7 +55,7 @@ const Login = () => {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      const isAdmin = result.user.email === "dhruvidhameliya01@gmail.com";
+      const isAdmin = result.user.email === "dhruvidhameliya01@gmail.com" || result.user.email === "dhameliyaheet201@gmail.com";
       
       await setDoc(doc(db, 'users', result.user.uid), {
         uid: result.user.uid,
