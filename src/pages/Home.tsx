@@ -157,10 +157,10 @@ const Home = () => {
           
           <div className="relative mb-12">
             <motion.h1
-              className="text-[12vw] md:text-[11rem] font-black tracking-tighter leading-[0.8] uppercase"
+              className="text-[15vw] md:text-[11rem] font-black tracking-tighter leading-[0.8] uppercase"
             >
               <motion.span 
-                initial={{ opacity: 0, y: 100, rotateX: -45 }}
+                initial={{ opacity: 0, y: 50, rotateX: -45 }}
                 animate={{ opacity: 1, y: 0, rotateX: 0 }}
                 transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
                 className="block text-white text-glow mb-2"
@@ -168,7 +168,7 @@ const Home = () => {
                 Slap
               </motion.span>
               <motion.span 
-                initial={{ opacity: 0, y: 100, rotateX: -45 }}
+                initial={{ opacity: 0, y: 50, rotateX: -45 }}
                 animate={{ opacity: 1, y: 0, rotateX: 0 }}
                 transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
                 className="block text-gradient italic"
@@ -211,20 +211,20 @@ const Home = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.2 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-8"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8"
           >
             <Link 
               to="/shop" 
-              className="group relative px-16 py-7 bg-brand-primary text-white rounded-2xl font-black text-sm uppercase tracking-widest overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_20px_50px_rgba(242,125,38,0.3)]"
+              className="w-full sm:w-auto group relative px-10 sm:px-16 py-5 sm:py-7 bg-brand-primary text-white rounded-2xl font-black text-xs sm:text-sm uppercase tracking-widest overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_20px_50px_rgba(242,125,38,0.3)]"
             >
-              <span className="relative z-10 flex items-center gap-3">
+              <span className="relative z-10 flex items-center justify-center gap-3">
                 Enter The Shop <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </span>
               <div className="absolute inset-0 bg-linear-to-r from-white/0 via-white/20 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
             </Link>
             <Link 
               to="/about" 
-              className="group px-16 py-7 glass-dark text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-white/10 transition-all border border-white/10 hover:border-white/30"
+              className="w-full sm:w-auto group px-10 sm:px-16 py-5 sm:py-7 glass-dark text-white rounded-2xl font-black text-xs sm:text-sm uppercase tracking-widest hover:bg-white/10 transition-all border border-white/10 hover:border-white/30"
             >
               <span className="group-hover:text-brand-primary transition-colors">Our DNA</span>
             </Link>
@@ -243,16 +243,16 @@ const Home = () => {
       </section>
 
       {/* Bento Categories Section */}
-      <section className="py-32 px-6 relative">
+      <section className="py-16 sm:py-32 px-6 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-20">
-            <h2 className="text-6xl font-black tracking-tighter uppercase mb-4">
+          <div className="mb-12 sm:mb-20">
+            <h2 className="text-4xl sm:text-6xl font-black tracking-tighter uppercase mb-4">
               The <span className="text-brand-primary">Collections</span>
             </h2>
             <div className="w-20 h-1 bg-brand-primary" />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-6 h-[800px]">
+          <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 sm:gap-6 md:h-[800px]">
             {categories.map((cat, i) => (
               <motion.div
                 key={cat.name}
@@ -260,7 +260,7 @@ const Home = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className={`group relative rounded-[2.5rem] overflow-hidden glass-dark border-white/5 cursor-pointer
+                className={`group relative rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden glass-dark border-white/5 cursor-pointer min-h-[250px]
                   ${cat.size === 'large' ? 'md:col-span-2 md:row-span-2' : ''}
                   ${cat.size === 'medium' ? 'md:col-span-2' : ''}
                 `}
@@ -291,14 +291,14 @@ const Home = () => {
       </section>
 
       {/* Trending Section */}
-      <section className="py-32 px-6 bg-black/40 relative">
+      <section className="py-16 sm:py-32 px-6 bg-black/40 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-20 gap-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 sm:mb-20 gap-8">
             <div>
-              <h2 className="text-6xl font-black tracking-tighter uppercase mb-4">Trending <span className="text-brand-primary">Now</span></h2>
-              <p className="text-white/30 font-medium uppercase tracking-widest text-sm">The most slapped stickers of the month.</p>
+              <h2 className="text-4xl sm:text-6xl font-black tracking-tighter uppercase mb-4">Trending <span className="text-brand-primary">Now</span></h2>
+              <p className="text-white/30 font-medium uppercase tracking-widest text-[10px] sm:text-sm">The most slapped stickers of the month.</p>
             </div>
-            <Link to="/shop" className="group flex items-center gap-4 px-8 py-4 glass-dark rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-brand-primary transition-all">
+            <Link to="/shop" className="w-full sm:w-auto group flex items-center justify-center gap-4 px-8 py-4 glass-dark rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-brand-primary transition-all">
               View All <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
@@ -330,9 +330,9 @@ const Home = () => {
       </section>
 
       {/* Features Section - Bento Style */}
-      <section className="py-32 px-6">
+      <section className="py-16 sm:py-32 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {[
               { title: "Hyper-Speed", desc: "Same-day shipping for all local orders." },
               { title: "Titan-Grade", desc: "Premium vinyl that resists everything." },
@@ -377,24 +377,24 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 px-6">
+      <section className="py-16 sm:py-32 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="relative glass-dark rounded-[4rem] p-12 md:p-24 overflow-hidden text-center border-brand-primary/20">
+          <div className="relative glass-dark rounded-[2rem] sm:rounded-[4rem] p-8 sm:p-24 overflow-hidden text-center border-brand-primary/20">
             <div className="absolute top-0 left-0 w-full h-full scanline opacity-10" />
             <div className="absolute -top-24 -right-24 w-96 h-96 bg-brand-primary/20 blur-[120px] rounded-full" />
             <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 blur-[120px] rounded-full" />
             
             <div className="relative z-10">
-              <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter mb-8">
+              <h2 className="text-3xl sm:text-7xl font-black uppercase tracking-tighter mb-6 sm:mb-8">
                 Ready to <span className="text-gradient italic">Slap?</span>
               </h2>
-              <p className="text-white/40 text-lg max-w-2xl mx-auto mb-12 font-medium uppercase tracking-widest">
-                Join the elite community of sticker enthusiasts. <br />
+              <p className="text-white/40 text-sm sm:text-lg max-w-2xl mx-auto mb-8 sm:mb-12 font-medium uppercase tracking-widest">
+                Join the elite community of sticker enthusiasts. <br className="hidden sm:block" />
                 Limited edition drops every week.
               </p>
               <Link 
                 to="/login" 
-                className="inline-flex items-center gap-4 px-12 py-6 bg-white text-black rounded-2xl font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-all hover:scale-105 active:scale-95"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-4 px-10 sm:px-12 py-5 sm:py-6 bg-white text-black rounded-2xl font-black uppercase tracking-widest hover:bg-brand-primary hover:text-white transition-all hover:scale-105 active:scale-95"
               >
                 Join The Vibe <ArrowRight size={20} />
               </Link>

@@ -67,7 +67,7 @@ const Navbar = () => {
       scrolled ? "py-4" : "py-8"
     )}>
       <div className={cn(
-        "max-w-7xl mx-auto flex items-center justify-start gap-12 lg:gap-20 px-8 py-4 rounded-[2rem] transition-all duration-500 border border-white/5",
+        "max-w-7xl mx-auto flex items-center justify-start gap-4 sm:gap-12 lg:gap-20 px-4 sm:px-8 py-3 sm:py-4 rounded-[1.5rem] sm:rounded-[2rem] transition-all duration-500 border border-white/5",
         scrolled ? "glass-dark shadow-2xl backdrop-blur-2xl border-white/10" : "bg-transparent border-transparent"
       )}>
         <Link to="/" className="text-3xl font-black tracking-tighter flex items-center gap-2 group shrink-0">

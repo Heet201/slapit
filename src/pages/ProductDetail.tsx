@@ -160,21 +160,21 @@ const ProductDetail = () => {
                   </div>
                 </div>
                 
-                <h1 className="text-6xl md:text-7xl font-black tracking-tighter uppercase text-glow leading-none">
+                <h1 className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tighter uppercase text-glow leading-none">
                   {product.name}
                 </h1>
                 
                 <div className="flex items-baseline gap-4">
-                  <span className="text-4xl font-black text-brand-primary">₹{product.price}</span>
+                  <span className="text-3xl sm:text-4xl font-black text-brand-primary">₹{product.price}</span>
                   <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Credits Required</span>
                 </div>
               </div>
 
-              <p className="text-white/40 leading-relaxed text-lg font-medium">
+              <p className="text-white/40 leading-relaxed text-base sm:text-lg font-medium">
                 {product.description}
               </p>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 {product.features?.map((feature: string, i: number) => (
                   <div key={i} className="flex items-center gap-4 glass-dark p-4 rounded-2xl border border-white/5 group hover:border-brand-primary/30 transition-colors">
                     <div className="w-10 h-10 bg-brand-primary/10 rounded-xl flex items-center justify-center text-brand-primary group-hover:scale-110 transition-transform">
@@ -186,8 +186,8 @@ const ProductDetail = () => {
               </div>
 
               <div className="space-y-8 pt-10">
-                <div className="flex flex-wrap items-center gap-6">
-                  <div className="flex items-center glass-dark rounded-2xl p-1.5 border border-white/5">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6">
+                  <div className="flex items-center justify-between glass-dark rounded-2xl p-1.5 border border-white/5">
                     <button 
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                       className="w-12 h-12 flex items-center justify-center text-white/40 hover:text-brand-primary transition-colors font-black text-xl"
@@ -211,7 +211,7 @@ const ProductDetail = () => {
                     Initialize Purchase
                   </button>
                   
-                  <button className="w-16 h-16 glass-dark rounded-2xl flex items-center justify-center border border-white/5 text-white/30 hover:text-brand-secondary hover:border-brand-secondary/30 transition-all">
+                  <button className="hidden sm:flex w-16 h-16 glass-dark rounded-2xl items-center justify-center border border-white/5 text-white/30 hover:text-brand-secondary hover:border-brand-secondary/30 transition-all">
                     <Heart size={24} />
                   </button>
                 </div>

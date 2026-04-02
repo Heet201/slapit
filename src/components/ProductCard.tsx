@@ -40,34 +40,34 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </div>
       </Link>
       
-      <div className="p-8 pt-2">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/60 mb-2 block">
+      <div className="p-4 sm:p-8 pt-2">
+        <div className="flex justify-between items-start mb-2 sm:mb-4">
+          <div className="min-w-0 flex-1">
+            <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-brand-primary/60 mb-1 sm:mb-2 block truncate">
               {product.category}
             </span>
             <Link to={`/product/${product.id}`}>
-              <h3 className="font-black text-xl uppercase tracking-tighter group-hover:text-brand-primary transition-colors leading-none">
+              <h3 className="font-black text-sm sm:text-xl uppercase tracking-tighter group-hover:text-brand-primary transition-colors leading-tight truncate">
                 {product.name}
               </h3>
             </Link>
           </div>
-          <div className="flex items-center gap-1.5 glass-dark px-3 py-1.5 rounded-full text-[10px] font-black border-white/5">
-            <Star size={10} className="fill-brand-primary text-brand-primary" />
+          <div className="flex items-center gap-1 glass-dark px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[8px] sm:text-[10px] font-black border-white/5 shrink-0 ml-2">
+            <Star size={8} className="fill-brand-primary text-brand-primary sm:w-[10px] sm:h-[10px]" />
             {product.rating}
           </div>
         </div>
 
-        <div className="flex items-center justify-between mt-8">
+        <div className="flex items-center justify-between mt-4 sm:mt-8">
           <div className="flex flex-col">
-            <span className="text-[8px] font-black uppercase tracking-widest text-white/30 mb-1">Price</span>
-            <span className="text-2xl font-black tracking-tighter">₹{product.price}</span>
+            <span className="text-[7px] sm:text-[8px] font-black uppercase tracking-widest text-white/30 mb-0.5 sm:mb-1">Price</span>
+            <span className="text-lg sm:text-2xl font-black tracking-tighter">₹{product.price}</span>
           </div>
           <button
             onClick={() => addToCart(product)}
-            className="group/btn relative w-14 h-14 bg-white text-black rounded-2xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:bg-brand-primary hover:text-white hover:scale-110 active:scale-95 shadow-xl"
+            className="group/btn relative w-10 h-10 sm:w-14 sm:h-14 bg-white text-black rounded-xl sm:rounded-2xl flex items-center justify-center overflow-hidden transition-all duration-300 hover:bg-brand-primary hover:text-white hover:scale-110 active:scale-95 shadow-xl"
           >
-            <Plus size={24} className="relative z-10" />
+            <Plus size={18} className="relative z-10 sm:w-6 sm:h-6" />
             <div className="absolute inset-0 bg-brand-primary translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
           </button>
         </div>

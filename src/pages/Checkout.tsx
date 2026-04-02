@@ -129,9 +129,9 @@ const Checkout = () => {
       <div className="fixed inset-0 scanline pointer-events-none opacity-10" />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="flex items-center gap-6 mb-16">
-          <h1 className="text-6xl font-black tracking-tighter uppercase text-glow">Final <span className="text-brand-primary">Protocol</span></h1>
-          <div className="h-px flex-grow bg-white/5" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-12 sm:mb-16">
+          <h1 className="text-4xl sm:text-6xl font-black tracking-tighter uppercase text-glow">Final <span className="text-brand-primary">Protocol</span></h1>
+          <div className="h-px flex-grow bg-white/5 w-full sm:w-auto" />
         </div>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-20">
