@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #f27d26;
+  --color-brand-secondary: #ff4444;
+  --color-brand-dark: #050505;
+  --color-brand-glass: rgba(255, 255, 255, 0.05);
+  --font-display: 'Anton', sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-[#050505] text-white selection:bg-brand-primary selection:text-white;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+  }
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-linear-to-r from-brand-primary to-brand-secondary;
+  }
+  .sticker-border {
+    @apply border-4 border-white shadow-[0_0_15px_rgba(255,255,255,0.3)];
+  }
+  .peel-effect {
+    transition: transform 0.3s ease, clip-path 0.3s ease;
+  }
+  .peel-effect:hover {
+    clip-path: polygon(0 0, 100% 0, 100% 90%, 90% 100%, 0 100%);
+  }
+}
+
+/* Custom Cursor */
+.custom-cursor {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-brand-primary);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.1s ease;
+}
+
+/* Hide default cursor on desktop */
+@media (min-width: 1024px) {
+  body {
+    cursor: none;
+  }
+  a, button, .interactive {
+    cursor: none;
+  }
+}
