@@ -96,7 +96,11 @@ const Login = () => {
             <Fingerprint size={40} />
           </motion.div>
           <h2 className="text-5xl font-black uppercase tracking-tighter mb-4 text-glow">
-            {isLogin ? 'Access <span className="text-brand-primary">Granted</span>' : 'Initialize <span className="text-brand-primary">Profile</span>'}
+            {isLogin ? (
+              <>Access <span className="text-brand-primary">Granted</span></>
+            ) : (
+              <>Initialize <span className="text-brand-primary">Profile</span></>
+            )}
           </h2>
           <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.3em]">
             {isLogin ? 'Establish secure connection to terminal' : 'Register new identity in the matrix'}
