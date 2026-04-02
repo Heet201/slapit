@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import { Mail, Lock, User, ArrowRight, Github, Chrome } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Mail, Lock, User, ArrowRight, Github, Chrome, Zap, ShieldCheck, Fingerprint } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
+import { cn } from '../lib/utils';
 
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -71,104 +72,146 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-6 py-20">
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-primary/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-brand-secondary/10 blur-[120px] rounded-full" />
+    <div className="min-h-screen flex items-center justify-center px-6 py-24 relative overflow-hidden">
+      {/* Grid Background */}
+      <div className="fixed inset-0 grid-bg opacity-20 pointer-events-none" />
+      <div className="fixed inset-0 scanline pointer-events-none opacity-10" />
+
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-brand-primary/10 blur-[150px] rounded-full animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-brand-secondary/10 blur-[150px] rounded-full animate-pulse delay-1000" />
       </div>
 
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 w-full max-w-md glass p-10 rounded-[3rem]"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative z-10 w-full max-w-lg glass-dark p-12 rounded-[4rem] border border-white/5 shadow-2xl"
       >
-        <div className="text-center mb-10">
-          <h2 className="text-4xl font-black uppercase tracking-tighter mb-2">
-            {isLogin ? 'Welcome Back' : 'Join the Vibe'}
+        <div className="text-center mb-12">
+          <motion.div 
+            initial={{ rotate: -10, scale: 0.8 }}
+            animate={{ rotate: 0, scale: 1 }}
+            className="w-20 h-20 bg-brand-primary/10 rounded-3xl flex items-center justify-center text-brand-primary mx-auto mb-8 border border-brand-primary/20 shadow-[0_0_20px_rgba(242,125,38,0.2)]"
+          >
+            <Fingerprint size={40} />
+          </motion.div>
+          <h2 className="text-5xl font-black uppercase tracking-tighter mb-4 text-glow">
+            {isLogin ? 'Access <span className="text-brand-primary">Granted</span>' : 'Initialize <span className="text-brand-primary">Profile</span>'}
           </h2>
-          <p className="text-white/50 text-sm">
-            {isLogin ? 'Log in to your SLAPIT account' : 'Create an account to start slapping'}
+          <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.3em]">
+            {isLogin ? 'Establish secure connection to terminal' : 'Register new identity in the matrix'}
           </p>
         </div>
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-500 text-xs p-4 rounded-xl mb-6">
-            {error}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest p-5 rounded-2xl mb-8 flex items-center gap-3"
+            >
+              <Zap size={14} className="shrink-0" />
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <form onSubmit={handleAuth} className="space-y-4">
+        <form onSubmit={handleAuth} className="space-y-6">
           {!isLogin && (
-            <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-              <input 
-                type="text" 
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Full Name" 
-                className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-brand-primary" 
-              />
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Identity Name</label>
+              <div className="relative group">
+                <User className="absolute left-6 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-brand-primary transition-colors" size={18} />
+                <input 
+                  type="text" 
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="ENTER FULL NAME" 
+                  className="w-full glass-dark border border-white/5 rounded-2xl pl-16 pr-6 py-5 focus:outline-none focus:border-brand-primary transition-all font-black uppercase tracking-widest text-xs placeholder:text-white/5" 
+                />
+              </div>
             </div>
           )}
-          <div className="relative">
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-            <input 
-              type="email" 
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email Address" 
-              className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-brand-primary" 
-            />
+          
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Signal Address</label>
+            <div className="relative group">
+              <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-brand-primary transition-colors" size={18} />
+              <input 
+                type="email" 
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="EMAIL@TERMINAL.COM" 
+                className="w-full glass-dark border border-white/5 rounded-2xl pl-16 pr-6 py-5 focus:outline-none focus:border-brand-primary transition-all font-black uppercase tracking-widest text-xs placeholder:text-white/5" 
+              />
+            </div>
           </div>
-          <div className="relative">
-            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
-            <input 
-              type="password" 
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password" 
-              className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-brand-primary" 
-            />
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-white/20 ml-2">Access Key</label>
+            <div className="relative group">
+              <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-brand-primary transition-colors" size={18} />
+              <input 
+                type="password" 
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••" 
+                className="w-full glass-dark border border-white/5 rounded-2xl pl-16 pr-6 py-5 focus:outline-none focus:border-brand-primary transition-all font-black uppercase tracking-widest text-xs placeholder:text-white/5" 
+              />
+            </div>
           </div>
 
           <button 
             disabled={loading}
-            className="w-full h-14 bg-brand-primary text-white rounded-full font-bold flex items-center justify-center gap-2 hover:bg-brand-secondary transition-all active:scale-95 disabled:opacity-50"
+            className="w-full h-16 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 hover:bg-brand-primary hover:text-white transition-all active:scale-95 disabled:opacity-50 shadow-xl group mt-10"
           >
-            {loading ? 'Processing...' : isLogin ? 'Log In' : 'Sign Up'} <ArrowRight size={18} />
+            {loading ? (
+              <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <>
+                {isLogin ? 'Establish Connection' : 'Initialize Profile'} 
+                <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+              </>
+            )}
           </button>
         </form>
 
-        <div className="mt-8 flex items-center gap-4">
-          <div className="flex-grow h-px bg-white/10"></div>
-          <span className="text-[10px] uppercase tracking-widest text-white/30 font-bold">Or continue with</span>
-          <div className="flex-grow h-px bg-white/10"></div>
+        <div className="mt-12 flex items-center gap-6">
+          <div className="flex-grow h-px bg-white/5"></div>
+          <span className="text-[10px] uppercase tracking-[0.3em] text-white/20 font-black">External Auth</span>
+          <div className="flex-grow h-px bg-white/5"></div>
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-4">
+        <div className="mt-10 grid grid-cols-2 gap-6">
           <button 
             onClick={handleGoogleLogin}
-            className="h-14 glass rounded-2xl flex items-center justify-center gap-3 hover:bg-white/10 transition-all"
+            className="h-16 glass-dark rounded-2xl flex items-center justify-center gap-4 hover:bg-white/5 transition-all border border-white/5 group"
           >
-            <Chrome size={20} /> <span className="text-sm font-bold">Google</span>
+            <Chrome size={20} className="text-white/20 group-hover:text-brand-primary transition-colors" /> 
+            <span className="text-[10px] font-black uppercase tracking-widest">Google</span>
           </button>
-          <button className="h-14 glass rounded-2xl flex items-center justify-center gap-3 hover:bg-white/10 transition-all">
-            <Github size={20} /> <span className="text-sm font-bold">GitHub</span>
+          <button className="h-16 glass-dark rounded-2xl flex items-center justify-center gap-4 hover:bg-white/5 transition-all border border-white/5 group">
+            <Github size={20} className="text-white/20 group-hover:text-brand-primary transition-colors" /> 
+            <span className="text-[10px] font-black uppercase tracking-widest">GitHub</span>
           </button>
         </div>
 
-        <p className="mt-10 text-center text-sm text-white/40">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
+        <div className="mt-12 text-center">
           <button 
             onClick={() => setIsLogin(!isLogin)}
-            className="text-brand-primary font-bold hover:underline"
+            className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 hover:text-brand-primary transition-colors"
           >
-            {isLogin ? 'Sign Up' : 'Log In'}
+            {isLogin ? "New user? Create identity" : "Existing user? Access terminal"}
           </button>
-        </p>
+        </div>
+
+        <div className="mt-12 pt-8 border-t border-white/5 flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest text-white/10">
+          <ShieldCheck size={14} className="text-brand-primary" /> End-to-End Encrypted Session
+        </div>
       </motion.div>
     </div>
   );

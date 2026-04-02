@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Menu, X, Heart, Search, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { ShoppingCart, Menu, X, Search, User, LogOut, LayoutDashboard, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCart } from '../context/CartContext';
 import { cn } from '../lib/utils';
@@ -26,7 +26,8 @@ const Navbar = () => {
       if (currentUser) {
         // Check Firestore for admin role
         const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        const isDefaultAdmin = currentUser.email === "dhruvidhameliya01@gmail.com";
+        const adminEmails = ["dhruvidhameliya01@gmail.com", "dhameliyaheet201@gmail.com"];
+        const isDefaultAdmin = adminEmails.includes(currentUser.email || "");
         
         if ((userDoc.exists() && userDoc.data().role === 'admin') || isDefaultAdmin) {
           setIsAdmin(true);
@@ -62,100 +63,106 @@ const Navbar = () => {
 
   return (
     <nav className={cn(
-      "fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6 py-4",
-      scrolled ? "bg-black/80 backdrop-blur-md border-b border-white/10 py-3" : "bg-transparent"
+      "fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-6 py-6",
+      scrolled ? "py-4" : "py-8"
     )}>
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="text-3xl font-black tracking-tighter flex items-center gap-1 group">
+      <div className={cn(
+        "max-w-7xl mx-auto flex items-center justify-start gap-12 lg:gap-20 px-8 py-4 rounded-[2rem] transition-all duration-500 border border-white/5",
+        scrolled ? "glass-dark shadow-2xl backdrop-blur-2xl border-white/10" : "bg-transparent border-transparent"
+      )}>
+        <Link to="/" className="text-3xl font-black tracking-tighter flex items-center gap-2 group shrink-0">
+          <div className="relative">
+            <Zap size={28} className="text-brand-primary fill-brand-primary animate-pulse" />
+            <div className="absolute inset-0 blur-lg bg-brand-primary/50 animate-pulse" />
+          </div>
           <div className="flex">
             {"SLAPIT".split("").map((letter, i) => (
               <motion.span
                 key={i}
-                initial={{ y: 0, rotate: 0 }}
+                initial={{ y: 0 }}
                 whileHover={{ 
-                  y: -10, 
-                  rotate: [0, -10, 10, 0],
-                  color: i % 2 === 0 ? "#f27d26" : "#ff4444"
+                  y: -5,
+                  color: "#f27d26",
+                  textShadow: "0 0 15px rgba(242, 125, 38, 0.5)"
                 }}
                 transition={{ type: "spring", stiffness: 400 }}
-                className="inline-block"
+                className="inline-block text-glow"
               >
                 {letter}
               </motion.span>
             ))}
           </div>
-          <motion.div 
-            animate={{ rotate: [0, 15, -15, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="w-6 h-6 bg-white text-black rounded-sm flex items-center justify-center text-[10px] font-bold sticker-border -rotate-12 ml-2"
-          >
-            NEW
-          </motion.div>
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-10">
           {navLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-brand-primary",
-                location.pathname === link.path ? "text-brand-primary" : "text-white/70"
+                "text-xs font-black uppercase tracking-[0.2em] transition-all duration-300 hover:text-brand-primary relative group",
+                location.pathname === link.path ? "text-brand-primary" : "text-white/60"
               )}
             >
               {link.name}
+              <span className={cn(
+                "absolute -bottom-2 left-0 w-0 h-0.5 bg-brand-primary transition-all duration-300 group-hover:w-full",
+                location.pathname === link.path && "w-full"
+              )} />
             </Link>
           ))}
           {isAdmin && (
             <Link
               to="/admin"
-              className="text-sm font-bold text-brand-primary flex items-center gap-1 hover:underline"
+              className="text-xs font-black uppercase tracking-[0.2em] text-brand-primary flex items-center gap-2 hover:scale-105 transition-transform"
             >
               <LayoutDashboard size={14} /> Admin
             </Link>
           )}
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
-          <button className="p-2 hover:text-brand-primary transition-colors hidden sm:block">
+        <div className="flex items-center gap-3 sm:gap-6 ml-auto">
+          <button className="p-2 text-white/60 hover:text-brand-primary transition-colors hidden sm:block">
             <Search size={20} />
           </button>
           
-          <Link to="/cart" className="p-2 hover:text-brand-primary transition-colors relative">
+          <Link to="/cart" className="p-2 text-white/60 hover:text-brand-primary transition-colors relative group">
             <ShoppingCart size={20} />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-brand-primary text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 bg-brand-primary text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(242,125,38,0.5)]">
                 {cartCount}
               </span>
             )}
           </Link>
 
           {user ? (
-            <div className="flex items-center gap-2">
-              <div className="hidden sm:flex flex-col items-end mr-2">
-                <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Welcome</span>
-                <span className="text-xs font-bold text-white truncate max-w-[100px]">{user.displayName || user.email?.split('@')[0]}</span>
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">Authorized</span>
+                <span className="text-[10px] font-black text-white uppercase tracking-wider truncate max-w-[100px]">
+                  {user.displayName || user.email?.split('@')[0]}
+                </span>
               </div>
               <button 
                 onClick={handleLogout}
-                className="p-2 hover:text-brand-primary transition-colors"
+                className="w-10 h-10 glass-dark rounded-xl flex items-center justify-center text-white/60 hover:text-red-500 hover:border-red-500/30 transition-all border border-white/5"
                 title="Logout"
               >
-                <LogOut size={20} />
+                <LogOut size={18} />
               </button>
             </div>
           ) : (
-            <Link to="/login" className="p-2 hover:text-brand-primary transition-colors">
-              <User size={20} />
+            <Link to="/login" className="w-10 h-10 glass-dark rounded-xl flex items-center justify-center text-white/60 hover:text-brand-primary hover:border-brand-primary/30 transition-all border border-white/5">
+              <User size={18} />
             </Link>
           )}
 
           <button 
-            className="md:hidden p-2"
+            className="md:hidden w-10 h-10 glass-dark rounded-xl flex items-center justify-center text-white/60 border border-white/5"
             onClick={() => setIsOpen(!isOpen)}
           >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
+            {isOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>
@@ -164,18 +171,21 @@ const Navbar = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-full left-0 right-0 bg-black/95 border-b border-white/10 p-6 md:hidden"
+            initial={{ opacity: 0, scale: 0.95, y: -20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: -20 }}
+            className="absolute top-full left-6 right-6 mt-4 glass-dark border border-white/10 rounded-[2rem] p-8 md:hidden shadow-2xl backdrop-blur-3xl"
           >
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
                   onClick={() => setIsOpen(false)}
-                  className="text-lg font-medium"
+                  className={cn(
+                    "text-xl font-black uppercase tracking-[0.2em] transition-colors",
+                    location.pathname === link.path ? "text-brand-primary" : "text-white/60"
+                  )}
                 >
                   {link.name}
                 </Link>
@@ -184,25 +194,26 @@ const Navbar = () => {
                 <Link
                   to="/admin"
                   onClick={() => setIsOpen(false)}
-                  className="text-lg font-bold text-brand-primary"
+                  className="text-xl font-black uppercase tracking-[0.2em] text-brand-primary"
                 >
-                  Admin Dashboard
+                  Admin Portal
                 </Link>
               )}
+              <div className="h-px bg-white/10 my-2" />
               {user ? (
                 <button 
                   onClick={() => { handleLogout(); setIsOpen(false); }}
-                  className="text-lg font-medium text-red-500 flex items-center gap-2"
+                  className="text-xl font-black uppercase tracking-[0.2em] text-red-500 flex items-center gap-3"
                 >
-                  <LogOut size={20} /> Logout
+                  <LogOut size={20} /> Terminate Session
                 </button>
               ) : (
                 <Link
                   to="/login"
                   onClick={() => setIsOpen(false)}
-                  className="text-lg font-medium"
+                  className="text-xl font-black uppercase tracking-[0.2em] text-white"
                 >
-                  Login / Signup
+                  Initialize Access
                 </Link>
               )}
             </div>

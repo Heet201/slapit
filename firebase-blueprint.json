@@ -25,14 +25,18 @@
       "properties": {
         "id": { "type": "string" },
         "userId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerEmail": { "type": "string" },
         "items": { "type": "array", "items": { "type": "object" } },
         "total": { "type": "number" },
         "status": { "type": "string", "enum": ["pending", "processing", "shipped", "delivered"] },
+        "paymentMethod": { "type": "string", "enum": ["UPI", "Card", "COD"] },
         "shippingAddress": { "type": "string" },
+        "pincode": { "type": "string" },
         "phone": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["userId", "items", "total", "shippingAddress", "phone"]
+      "required": ["userId", "customerName", "items", "total", "shippingAddress", "phone"]
     },
     "User": {
       "title": "User",

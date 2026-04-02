@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { Search, Filter, SlidersHorizontal } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Search, Filter, SlidersHorizontal, Zap } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import ProductCard from '../components/ProductCard';
+import { cn } from '../lib/utils';
 
 const Shop = () => {
   const [products, setProducts] = useState<any[]>([]);
@@ -37,91 +38,145 @@ const Shop = () => {
 
   if (loading) {
     return (
-      <div className="h-[70vh] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="h-screen flex items-center justify-center bg-black">
+        <div className="relative">
+          <div className="w-20 h-20 border-4 border-brand-primary/20 rounded-full"></div>
+          <div className="w-20 h-20 border-4 border-brand-primary border-t-transparent rounded-full animate-spin absolute inset-0 shadow-[0_0_20px_rgba(242,125,38,0.3)]"></div>
+          <Zap size={24} className="absolute inset-0 m-auto text-brand-primary animate-pulse" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="px-6 py-12 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
-        <div>
-          <h1 className="text-5xl font-black tracking-tighter uppercase mb-2">The Sticker Shop</h1>
-          <p className="text-white/50">Browse our collection of {products.length} premium stickers.</p>
+    <div className="min-h-screen pt-32 pb-24 px-6 relative overflow-hidden">
+      {/* Grid Background */}
+      <div className="fixed inset-0 grid-bg opacity-20 pointer-events-none" />
+      <div className="fixed inset-0 scanline pointer-events-none opacity-10" />
+      
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-10 mb-20">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-primary">Marketplace</span>
+              <div className="h-px w-12 bg-brand-primary/30" />
+            </div>
+            <h1 className="text-6xl md:text-7xl font-black tracking-tighter uppercase text-glow leading-none">
+              The <span className="text-brand-primary">Archive</span>
+            </h1>
+            <p className="text-white/40 font-medium uppercase tracking-widest text-[10px]">
+              Accessing {products.length} premium visual assets...
+            </p>
+          </div>
+          
+          <div className="relative w-full md:w-[450px] group">
+            <div className="absolute inset-0 bg-brand-primary/10 blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-brand-primary transition-colors" size={20} />
+            <input 
+              type="text" 
+              placeholder="Search the matrix..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full glass-dark border border-white/5 rounded-[2rem] pl-16 pr-6 py-6 focus:outline-none focus:border-brand-primary transition-all font-black uppercase tracking-widest text-xs placeholder:text-white/10"
+            />
+          </div>
         </div>
-        
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={20} />
-          <input 
-            type="text" 
-            placeholder="Search stickers..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-4 py-4 focus:outline-none focus:border-brand-primary transition-colors"
-          />
-        </div>
-      </div>
 
-      <div className="flex flex-col lg:flex-row gap-12">
-        {/* Sidebar Filters */}
-        <aside className="w-full lg:w-64 space-y-10">
-          <div>
-            <h4 className="font-bold uppercase tracking-widest text-xs text-white/40 mb-6 flex items-center gap-2">
-              <Filter size={14} /> Categories
-            </h4>
-            <div className="flex flex-wrap lg:flex-col gap-2">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setCategory(cat)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all text-left ${
-                    category === cat ? 'bg-brand-primary text-white' : 'glass hover:bg-white/10 text-white/60'
-                  }`}
+        <div className="flex flex-col lg:flex-row gap-16">
+          {/* Sidebar Filters */}
+          <aside className="w-full lg:w-72 space-y-12">
+            <div className="glass-dark p-8 rounded-[2.5rem] border border-white/5">
+              <h4 className="font-black uppercase tracking-[0.3em] text-[10px] text-white/30 mb-8 flex items-center gap-3">
+                <Filter size={14} className="text-brand-primary" /> Sector Filter
+              </h4>
+              <div className="flex flex-wrap lg:flex-col gap-3">
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setCategory(cat)}
+                    className={cn(
+                      "px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all text-left border relative overflow-hidden group",
+                      category === cat 
+                        ? 'bg-brand-primary text-white border-brand-primary shadow-[0_0_20px_rgba(242,125,38,0.3)]' 
+                        : 'bg-white/5 border-white/5 text-white/40 hover:border-white/20 hover:text-white'
+                    )}
+                  >
+                    <span className="relative z-10">{cat}</span>
+                    {category === cat && (
+                      <motion.div 
+                        layoutId="activeCategory"
+                        className="absolute inset-0 bg-brand-primary"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="glass-dark p-8 rounded-[2.5rem] border border-white/5">
+              <h4 className="font-black uppercase tracking-[0.3em] text-[10px] text-white/30 mb-8 flex items-center gap-3">
+                <SlidersHorizontal size={14} className="text-brand-primary" /> Sequence
+              </h4>
+              <div className="relative">
+                <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:border-brand-primary appearance-none cursor-pointer"
                 >
-                  {cat}
-                </button>
-              ))}
+                  <option value="newest" className="bg-[#0a0a0a]">Newest First</option>
+                  <option value="price-low" className="bg-[#0a0a0a]">Price: Low to High</option>
+                  <option value="price-high" className="bg-[#0a0a0a]">Price: High to Low</option>
+                </select>
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none opacity-30">
+                  <SlidersHorizontal size={12} />
+                </div>
+              </div>
             </div>
-          </div>
+          </aside>
 
-          <div>
-            <h4 className="font-bold uppercase tracking-widest text-xs text-white/40 mb-6 flex items-center gap-2">
-              <SlidersHorizontal size={14} /> Sort By
-            </h4>
-            <select 
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-primary"
-            >
-              <option value="newest">Newest First</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-            </select>
+          {/* Product Grid */}
+          <div className="flex-grow">
+            <AnimatePresence mode="wait">
+              {filteredProducts.length > 0 ? (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-10"
+                >
+                  {filteredProducts.map((product, i) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                    >
+                      <ProductCard product={product} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              ) : (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="h-[500px] flex flex-col items-center justify-center glass-dark rounded-[3rem] text-center p-12 border border-white/5"
+                >
+                  <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mb-8 border border-white/5">
+                    <Search size={40} className="text-white/10" />
+                  </div>
+                  <h3 className="text-3xl font-black uppercase tracking-tighter mb-4">No data found in the matrix</h3>
+                  <p className="text-white/30 font-medium uppercase tracking-widest text-xs">Try adjusting your filters or search terms.</p>
+                  <button 
+                    onClick={() => {setSearch(''); setCategory('All');}}
+                    className="mt-10 px-8 py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-brand-primary hover:text-white transition-all active:scale-95 shadow-xl"
+                  >
+                    Reset System Filters
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        </aside>
-
-        {/* Product Grid */}
-        <div className="flex-grow">
-          {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
-              {filteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="h-96 flex flex-col items-center justify-center glass rounded-3xl text-center p-12">
-              <Search size={48} className="text-white/20 mb-4" />
-              <h3 className="text-2xl font-bold mb-2">No stickers found</h3>
-              <p className="text-white/50">Try adjusting your filters or search terms.</p>
-              <button 
-                onClick={() => {setSearch(''); setCategory('All');}}
-                className="mt-6 text-brand-primary font-bold hover:underline"
-              >
-                Clear all filters
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
