@@ -15,7 +15,7 @@ const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 async function startServer() {
   const server = express();
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
 
   server.use(express.json());
 
