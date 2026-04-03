@@ -1,27 +1,43 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useLocation } from 'react-router-dom';
 import { Search, Filter, SlidersHorizontal, Zap } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import ProductCard from '../components/ProductCard';
 import { cn } from '../lib/utils';
 
 const Shop = () => {
+  const location = useLocation();
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>(['All']);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
 
-  const categories = ['All', 'Anime', 'Coding', 'Memes', 'Quotes', 'Aesthetic'];
-
   useEffect(() => {
     const loadData = async () => {
-      const data = await apiService.getProducts();
-      setProducts(data);
-      setLoading(false);
+      try {
+        const [productsData, categoriesData] = await Promise.all([
+          apiService.getProducts(),
+          apiService.getCategories()
+        ]);
+        setProducts(productsData);
+        setCategories(['All', ...categoriesData.map((c: any) => c.name)]);
+        
+        const params = new URLSearchParams(location.search);
+        const catParam = params.get('category');
+        if (catParam) {
+          setCategory(catParam);
+        }
+      } catch (error) {
+        console.error("Error loading shop data:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
-  }, []);
+  }, [location.search]);
 
   const filteredProducts = useMemo(() => {
     return products

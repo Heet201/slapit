@@ -50,6 +50,19 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "A product category with a background image.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "image": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "image"]
     }
   },
   "firestore": {
@@ -64,6 +77,10 @@
     "/users": {
       "schema": "User",
       "description": "Collection of user profiles."
+    },
+    "/categories": {
+      "schema": "Category",
+      "description": "Collection of product categories."
     }
   }
 }

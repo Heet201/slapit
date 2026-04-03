@@ -4,9 +4,12 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { apiService } from '../services/apiService';
 import ProductCard from '../components/ProductCard';
+import { db } from '../firebase';
+import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 
 const Home = () => {
   const [trendingProducts, setTrendingProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const { scrollY } = useScroll();
@@ -24,46 +27,31 @@ const Home = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
   
-  const categories = [
-    { 
-      name: "Anime", 
-      size: "large", 
-      color: "from-purple-600/30", 
-      bgImg: "https://images.unsplash.com/photo-1578632292335-df3abbb0d586?q=80&w=1000&auto=format&fit=crop"
-    },
-    { 
-      name: "Coding", 
-      size: "small", 
-      color: "from-blue-600/30", 
-      bgImg: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop"
-    },
-    { 
-      name: "Memes", 
-      size: "small", 
-      color: "from-green-600/30", 
-      bgImg: "https://images.unsplash.com/photo-1531259683007-016a7b628fc3?q=80&w=1000&auto=format&fit=crop"
-    },
-    { 
-      name: "Quotes", 
-      size: "medium", 
-      color: "from-orange-600/30", 
-      bgImg: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=1000&auto=format&fit=crop"
-    },
-    { 
-      name: "Aesthetic", 
-      size: "medium", 
-      color: "from-pink-600/30", 
-      bgImg: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=1000&auto=format&fit=crop"
-    }
-  ];
+  const getCategoryStyles = (index: number) => {
+    const styles = [
+      { size: "large", color: "from-purple-600/30" },
+      { size: "small", color: "from-blue-600/30" },
+      { size: "small", color: "from-green-600/30" },
+      { size: "medium", color: "from-orange-600/30" },
+      { size: "medium", color: "from-pink-600/30" },
+    ];
+    return styles[index % styles.length];
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      const data = await apiService.getProducts();
-      setTrendingProducts(data.slice(0, 4));
+    const unsubProducts = onSnapshot(query(collection(db, 'products'), orderBy('createdAt', 'desc'), limit(4)), (snapshot) => {
+      setTrendingProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
+    });
+
+    const unsubCategories = onSnapshot(query(collection(db, 'categories'), orderBy('createdAt', 'desc')), (snapshot) => {
+      setCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    return () => {
+      unsubProducts();
+      unsubCategories();
     };
-    loadData();
   }, []);
 
   return (
@@ -253,39 +241,49 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 sm:gap-6 md:h-[800px]">
-            {categories.map((cat, i) => (
-              <motion.div
-                key={cat.name}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={`group relative rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden glass-dark border-white/5 cursor-pointer min-h-[250px]
-                  ${cat.size === 'large' ? 'md:col-span-2 md:row-span-2' : ''}
-                  ${cat.size === 'medium' ? 'md:col-span-2' : ''}
-                `}
-              >
-                <img 
-                  src={cat.bgImg} 
-                  alt={cat.name} 
-                  className="w-full h-full object-cover opacity-30 group-hover:opacity-50 group-hover:scale-110 transition-all duration-700"
-                  referrerPolicy="no-referrer"
-                />
-                <div className={`absolute inset-0 bg-linear-to-br ${cat.color} to-transparent opacity-40 group-hover:opacity-60 transition-opacity duration-500`} />
-                
-
-
-                <div className="absolute inset-0 flex flex-col justify-end p-10 bg-linear-to-t from-black/60 via-transparent to-transparent">
-                  <div className="transform group-hover:-translate-y-2 transition-transform duration-300">
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary mb-2 block">Category</span>
-                    <h3 className="text-4xl font-black uppercase tracking-tighter mb-4">{cat.name}</h3>
-                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all">
-                      Explore
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+            {categories.length > 0 ? (
+              categories.map((cat, i) => {
+                const style = getCategoryStyles(i);
+                return (
+                  <motion.div
+                    key={cat.id || cat.name}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1 }}
+                    className={`group relative rounded-[1.5rem] sm:rounded-[2.5rem] overflow-hidden glass-dark border-white/5 cursor-pointer min-h-[250px]
+                      ${style.size === 'large' ? 'md:col-span-2 md:row-span-2' : ''}
+                      ${style.size === 'medium' ? 'md:col-span-2' : ''}
+                    `}
+                  >
+                    <Link to={`/shop?category=${cat.name}`} className="block w-full h-full">
+                      <img 
+                        src={cat.image} 
+                        alt={cat.name} 
+                        className="w-full h-full object-cover opacity-30 group-hover:opacity-50 group-hover:scale-110 transition-all duration-700"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className={`absolute inset-0 bg-linear-to-br ${style.color} to-transparent opacity-40 group-hover:opacity-60 transition-opacity duration-500`} />
+                      
+                      <div className="absolute inset-0 flex flex-col justify-end p-10 bg-linear-to-t from-black/60 via-transparent to-transparent">
+                        <div className="transform group-hover:-translate-y-2 transition-transform duration-300">
+                          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-primary mb-2 block">Category</span>
+                          <h3 className="text-4xl font-black uppercase tracking-tighter mb-4">{cat.name}</h3>
+                          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all">
+                            Explore
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })
+            ) : (
+              <div className="col-span-full py-20 text-center glass-dark rounded-[3rem] border-dashed border-white/10">
+                <p className="text-white/20 font-black uppercase tracking-[0.5em]">No sectors initialized in the matrix.</p>
+                <p className="text-white/10 text-xs mt-4 uppercase tracking-widest">Add categories in the Admin Panel {'>'} Sectors tab.</p>
+              </div>
+            )}
           </div>
         </div>
       </section>

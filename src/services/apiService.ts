@@ -39,6 +39,64 @@ export const apiService = {
     }
   },
 
+  // Get all categories
+  async getCategories() {
+    try {
+      const response = await fetch('/api/categories');
+      if (!response.ok) throw new Error('Network response was not ok');
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      return [];
+    }
+  },
+
+  // Admin: Naya category add karne ke liye
+  async createCategory(categoryData: any) {
+    try {
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(categoryData),
+      });
+      if (!response.ok) throw new Error('Failed to create category');
+      return await response.json();
+    } catch (error) {
+      console.error("Error creating category:", error);
+      throw error;
+    }
+  },
+
+  // Admin: Category update karne ke liye
+  async updateCategory(id: string, categoryData: any) {
+    try {
+      const response = await fetch(`/api/categories/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(categoryData),
+      });
+      if (!response.ok) throw new Error('Failed to update category');
+      return await response.json();
+    } catch (error) {
+      console.error(`Error updating category ${id}:`, error);
+      throw error;
+    }
+  },
+
+  // Admin: Category delete karne ke liye
+  async deleteCategory(id: string) {
+    try {
+      const response = await fetch(`/api/categories/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete category');
+      return await response.json();
+    } catch (error) {
+      console.error(`Error deleting category ${id}:`, error);
+      throw error;
+    }
+  },
+
   // Admin: Naya product add karne ke liye
   async createProduct(productData: any) {
     try {

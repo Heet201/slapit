@@ -14,6 +14,7 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -84,7 +85,7 @@ const Checkout = () => {
       setTimeout(() => navigate('/'), 4000);
     } catch (error) {
       console.error("Error creating order:", error);
-      alert("Failed to place order. Please try again.");
+      setError("Failed to place order. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -132,6 +133,12 @@ const Checkout = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-12 sm:mb-16">
           <h1 className="text-4xl sm:text-6xl font-black tracking-tighter uppercase text-glow">Final <span className="text-brand-primary">Protocol</span></h1>
           <div className="h-px flex-grow bg-white/5 w-full sm:w-auto" />
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest animate-pulse">
+              {error}
+              <button onClick={() => setError(null)} className="ml-4 text-white/50 hover:text-white">X</button>
+            </div>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-20">

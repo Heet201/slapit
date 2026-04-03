@@ -38,25 +38,70 @@ import {
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 
+// Operation types for error handling
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'users'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'categories' | 'orders' | 'users'>('dashboard');
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string, type: 'product' | 'category' } | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
   const navigate = useNavigate();
+
+  const handleFirestoreError = (error: any, operationType: OperationType, path: string | null) => {
+    const errInfo = {
+      error: error instanceof Error ? error.message : String(error),
+      authInfo: {
+        userId: auth.currentUser?.uid,
+        email: auth.currentUser?.email,
+        emailVerified: auth.currentUser?.emailVerified,
+        isAnonymous: auth.currentUser?.isAnonymous,
+        tenantId: auth.currentUser?.tenantId,
+        providerInfo: auth.currentUser?.providerData.map(provider => ({
+          providerId: provider.providerId,
+          displayName: provider.displayName,
+          email: provider.email,
+          photoUrl: provider.photoURL
+        })) || []
+      },
+      operationType,
+      path
+    };
+    console.error('Firestore Error: ', JSON.stringify(errInfo));
+    setError(`System Error [${operationType.toUpperCase()}]: ${errInfo.error}`);
+  };
 
   // Product Form State
   const [productForm, setProductForm] = useState({
     name: '',
     price: 0,
-    category: 'Aesthetic',
+    category: '',
     image: '',
     description: '',
     features: ['Waterproof', 'Premium Vinyl']
+  });
+
+  // Category Form State
+  const [categoryForm, setCategoryForm] = useState({
+    name: '',
+    image: '',
+    description: ''
   });
 
   useEffect(() => {
@@ -87,6 +132,10 @@ const Admin = () => {
       setProducts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    const unsubCategories = onSnapshot(query(collection(db, 'categories'), orderBy('createdAt', 'desc')), (snapshot) => {
+      setCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     const unsubOrders = onSnapshot(query(collection(db, 'orders'), orderBy('createdAt', 'desc')), (snapshot) => {
       setOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
@@ -97,28 +146,72 @@ const Admin = () => {
 
     return () => {
       unsubProducts();
+      unsubCategories();
       unsubOrders();
       unsubUsers();
     };
   }, [isAdmin]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'product' | 'category') => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 800000) {
-        alert("Image is too large! Please select an image under 800KB.");
+      if (file.size > 500000) {
+        setError("Image is too large! Please select an image under 500KB.");
         return;
       }
+      setError(null);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProductForm({ ...productForm, image: reader.result as string });
+        if (type === 'product') {
+          setProductForm({ ...productForm, image: reader.result as string });
+        } else {
+          setCategoryForm({ ...categoryForm, image: reader.result as string });
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleAddCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    try {
+      if (editingCategory) {
+        const categoryRef = doc(db, 'categories', editingCategory.id);
+        await updateDoc(categoryRef, {
+          ...categoryForm,
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        await addDoc(collection(db, 'categories'), {
+          ...categoryForm,
+          createdAt: serverTimestamp()
+        });
+      }
+      setIsCategoryModalOpen(false);
+      setEditingCategory(null);
+      setCategoryForm({
+        name: '',
+        image: '',
+        description: ''
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, 'categories');
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'categories', id));
+      setDeleteConfirm(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `categories/${id}`);
+    }
+  };
+
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     try {
       if (editingProduct) {
         const productRef = doc(db, 'products', editingProduct.id);
@@ -139,25 +232,31 @@ const Admin = () => {
       setProductForm({
         name: '',
         price: 0,
-        category: 'Aesthetic',
+        category: categories[0]?.name || '',
         image: '',
         description: '',
         features: ['Waterproof', 'Premium Vinyl']
       });
     } catch (error) {
-      console.error("Error adding/updating product:", error);
-      alert("Failed to save product. Check console for details.");
+      handleFirestoreError(error, OperationType.WRITE, 'products');
     }
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      try {
-        await deleteDoc(doc(db, 'products', id));
-      } catch (error) {
-        console.error("Error deleting product:", error);
-        alert("Failed to delete product. Check console for details.");
-      }
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      setDeleteConfirm(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `products/${id}`);
+    }
+  };
+
+  const confirmDelete = () => {
+    if (!deleteConfirm) return;
+    if (deleteConfirm.type === 'product') {
+      handleDeleteProduct(deleteConfirm.id);
+    } else {
+      handleDeleteCategory(deleteConfirm.id);
     }
   };
 
@@ -170,7 +269,7 @@ const Admin = () => {
       });
     } catch (error) {
       console.error("Error updating order status:", error);
-      alert("Failed to update order status.");
+      setError("Failed to update order status.");
     }
   };
 
@@ -210,6 +309,7 @@ const Admin = () => {
           {[
             { id: 'dashboard', icon: <LayoutDashboard size={18} />, label: 'Overview' },
             { id: 'products', icon: <Package size={18} />, label: 'Inventory' },
+            { id: 'categories', icon: <Filter size={18} />, label: 'Sectors' },
             { id: 'orders', icon: <ShoppingBag size={18} />, label: 'Transmissions' },
             { id: 'users', icon: <Users size={18} />, label: 'Entities' },
           ].map((item) => (
@@ -251,10 +351,18 @@ const Admin = () => {
             <h2 className="text-5xl font-black uppercase tracking-tighter text-glow">
               {activeTab === 'dashboard' && 'Neural Overview'}
               {activeTab === 'products' && 'Asset Management'}
+              {activeTab === 'categories' && 'Sector Configuration'}
               {activeTab === 'orders' && 'Transmission Logs'}
               {activeTab === 'users' && 'Entity Database'}
             </h2>
           </div>
+          
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest animate-pulse">
+              {error}
+              <button onClick={() => setError(null)} className="ml-4 text-white/50 hover:text-white">X</button>
+            </div>
+          )}
           
           {activeTab === 'products' && (
             <button 
@@ -263,7 +371,7 @@ const Admin = () => {
                 setProductForm({
                   name: '',
                   price: 0,
-                  category: 'Aesthetic',
+                  category: categories[0]?.name || '',
                   image: '',
                   description: '',
                   features: ['Waterproof', 'Premium Vinyl']
@@ -273,6 +381,23 @@ const Admin = () => {
               className="px-8 py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-3 hover:bg-brand-primary hover:text-white transition-all shadow-xl active:scale-95"
             >
               <Plus size={18} /> Initialize Asset
+            </button>
+          )}
+
+          {activeTab === 'categories' && (
+            <button 
+              onClick={() => {
+                setEditingCategory(null);
+                setCategoryForm({
+                  name: '',
+                  image: '',
+                  description: ''
+                });
+                setIsCategoryModalOpen(true);
+              }}
+              className="px-8 py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-3 hover:bg-brand-primary hover:text-white transition-all shadow-xl active:scale-95"
+            >
+              <Plus size={18} /> Initialize Sector
             </button>
           )}
         </header>
@@ -404,7 +529,63 @@ const Admin = () => {
                               <Edit size={16} />
                             </button>
                             <button 
-                              onClick={() => handleDeleteProduct(product.id)}
+                              onClick={() => setDeleteConfirm({ id: product.id, type: 'product' })}
+                              className="w-10 h-10 glass-dark flex items-center justify-center text-red-400 hover:bg-red-400 hover:text-white rounded-xl transition-all border border-white/5"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {activeTab === 'categories' && (
+              <div className="glass-dark rounded-[2.5rem] overflow-hidden border border-white/5">
+                <table className="w-full text-left">
+                  <thead className="bg-white/5 text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
+                    <tr>
+                      <th className="px-10 py-6">Visual</th>
+                      <th className="px-10 py-6">Sector Name</th>
+                      <th className="px-10 py-6">Brief</th>
+                      <th className="px-10 py-6 text-right">Operations</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {categories.map((cat) => (
+                      <tr key={cat.id} className="hover:bg-white/5 transition-colors group">
+                        <td className="px-10 py-6">
+                          <div className="w-24 h-16 rounded-2xl overflow-hidden border border-white/10 group-hover:border-brand-primary/50 transition-colors">
+                            <img src={cat.image} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        </td>
+                        <td className="px-10 py-6">
+                          <p className="font-black text-lg uppercase tracking-tighter">{cat.name}</p>
+                        </td>
+                        <td className="px-10 py-6 text-white/50 text-xs uppercase tracking-wide max-w-xs truncate">
+                          {cat.description || 'No brief provided'}
+                        </td>
+                        <td className="px-10 py-6">
+                          <div className="flex justify-end gap-3">
+                            <button 
+                              onClick={() => {
+                                setEditingCategory(cat);
+                                setCategoryForm({
+                                  name: cat.name,
+                                  image: cat.image,
+                                  description: cat.description || ''
+                                });
+                                setIsCategoryModalOpen(true);
+                              }}
+                              className="w-10 h-10 glass-dark flex items-center justify-center text-blue-400 hover:bg-blue-400 hover:text-white rounded-xl transition-all border border-white/5"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button 
+                              onClick={() => setDeleteConfirm({ id: cat.id, type: 'category' })}
                               className="w-10 h-10 glass-dark flex items-center justify-center text-red-400 hover:bg-red-400 hover:text-white rounded-xl transition-all border border-white/5"
                             >
                               <Trash2 size={16} />
@@ -588,8 +769,8 @@ const Admin = () => {
                         onChange={(e) => setProductForm({...productForm, category: e.target.value})}
                         className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-5 focus:outline-none focus:border-brand-primary transition-all font-black uppercase tracking-widest text-xs appearance-none cursor-pointer"
                       >
-                        {['Anime', 'Coding', 'Memes', 'Quotes', 'Aesthetic'].map(cat => (
-                          <option key={cat} value={cat} className="bg-[#0a0a0a]">{cat}</option>
+                        {categories.map(cat => (
+                          <option key={cat.id} value={cat.name} className="bg-[#0a0a0a]">{cat.name}</option>
                         ))}
                       </select>
                     </div>
@@ -604,7 +785,7 @@ const Admin = () => {
                           <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all backdrop-blur-sm">
                             <label className="cursor-pointer bg-white text-black px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-transform">
                               <Upload size={16} /> Update Matrix
-                              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'product')} />
                             </label>
                           </div>
                         </>
@@ -617,7 +798,7 @@ const Admin = () => {
                             <p className="font-black text-sm uppercase tracking-widest">Inject Visual Data</p>
                             <p className="text-[8px] uppercase tracking-[0.3em] mt-2 opacity-50">PNG, JPG &lt; 800KB</p>
                           </div>
-                          <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'product')} />
                         </label>
                       )}
                     </div>
@@ -643,6 +824,149 @@ const Admin = () => {
                   </span>
                 </button>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* Category Modal */}
+      <AnimatePresence>
+        {isCategoryModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsCategoryModalOpen(false)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-xl"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative glass-dark w-full max-w-3xl rounded-[3rem] p-12 overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+            >
+              <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/5 blur-[100px] pointer-events-none" />
+              
+              <button 
+                onClick={() => setIsCategoryModalOpen(false)}
+                className="absolute top-10 right-10 text-white/20 hover:text-white transition-colors"
+              >
+                <X size={28} />
+              </button>
+
+              <div className="mb-12">
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-primary mb-2 block">Sector Configuration</span>
+                <h3 className="text-4xl font-black uppercase tracking-tighter text-glow">
+                  {editingCategory ? 'Modify Sector' : 'New Sector Entry'}
+                </h3>
+              </div>
+
+              <form onSubmit={handleAddCategory} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-8">
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-4">Sector Designation</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={categoryForm.name}
+                        onChange={(e) => setCategoryForm({...categoryForm, name: e.target.value})}
+                        placeholder="Anime Sector" 
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-5 focus:outline-none focus:border-brand-primary transition-all font-black uppercase tracking-tight text-lg" 
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-4">Sector Brief</label>
+                      <textarea 
+                        rows={4} 
+                        value={categoryForm.description}
+                        onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})}
+                        placeholder="Enter sector parameters..." 
+                        className="w-full bg-white/5 border border-white/10 rounded-[2rem] px-8 py-6 focus:outline-none focus:border-brand-primary transition-all font-medium text-white/70 resize-none"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-4">Background Visual</label>
+                    <div className="relative aspect-square glass-dark rounded-[2.5rem] overflow-hidden group border-2 border-dashed border-white/5 hover:border-brand-primary/50 transition-all">
+                      {categoryForm.image ? (
+                        <>
+                          <img src={categoryForm.image} alt="Preview" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all backdrop-blur-sm">
+                            <label className="cursor-pointer bg-white text-black px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-transform">
+                              <Upload size={16} /> Update Visual
+                              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'category')} />
+                            </label>
+                          </div>
+                        </>
+                      ) : (
+                        <label className="absolute inset-0 cursor-pointer flex flex-col items-center justify-center gap-6 text-white/20 hover:text-brand-primary transition-all">
+                          <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center border border-white/5 group-hover:border-brand-primary/30 group-hover:bg-brand-primary/5 transition-all">
+                            <ImageIcon size={36} />
+                          </div>
+                          <div className="text-center">
+                            <p className="font-black text-sm uppercase tracking-widest">Inject Sector Visual</p>
+                            <p className="text-[8px] uppercase tracking-[0.3em] mt-2 opacity-50">PNG, JPG &lt; 800KB</p>
+                          </div>
+                          <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, 'category')} />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <button className="w-full h-20 bg-white text-black rounded-[2rem] font-black uppercase tracking-[0.3em] text-sm flex items-center justify-center gap-4 hover:bg-brand-primary hover:text-white transition-all active:scale-95 shadow-2xl relative group overflow-hidden">
+                  <div className="absolute inset-0 bg-brand-primary translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
+                  <span className="relative z-10 flex items-center gap-4">
+                    {editingCategory ? <Edit size={20} /> : <Plus size={20} />}
+                    {editingCategory ? 'Commit Sector Changes' : 'Authorize Sector Entry'}
+                  </span>
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeleteConfirm(null)}
+              className="absolute inset-0 bg-black/90 backdrop-blur-xl"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative glass-dark w-full max-w-md rounded-[2.5rem] p-10 overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)] text-center"
+            >
+              <div className="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center text-red-500 mx-auto mb-8 border border-red-500/20">
+                <Trash2 size={32} />
+              </div>
+              <h3 className="text-2xl font-black uppercase tracking-tighter mb-4">Confirm Deletion</h3>
+              <p className="text-white/50 text-sm uppercase tracking-widest mb-10 leading-relaxed">
+                Are you sure you want to terminate this {deleteConfirm.type}? This action is irreversible in the matrix.
+              </p>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setDeleteConfirm(null)}
+                  className="flex-1 py-4 glass-dark rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-white/5 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmDelete}
+                  className="flex-1 py-4 bg-red-500 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-600 transition-all shadow-[0_10px_30px_rgba(239,68,68,0.3)]"
+                >
+                  Terminate
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

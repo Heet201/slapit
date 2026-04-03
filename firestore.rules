@@ -61,7 +61,12 @@ service cloud.firestore {
     function isValidProduct(data) {
       return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.price is number && data.price > 0 &&
-             data.category in ['Anime', 'Coding', 'Memes', 'Quotes', 'Aesthetic'] &&
+             data.category is string && data.category.size() > 0 &&
+             data.image is string && data.image.size() > 0;
+    }
+
+    function isValidCategory(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.image is string && data.image.size() > 0;
     }
 
@@ -104,6 +109,13 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
       allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
       allow update: if isAuthenticated() && (isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role));
+    }
+
+    // Categories Collection
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidCategory(request.resource.data);
+      allow delete: if isAdmin();
     }
   }
 }

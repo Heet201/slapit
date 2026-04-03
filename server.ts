@@ -45,7 +45,60 @@ async function startServer() {
     }
   });
 
+  // Get all categories
+  server.get("/api/categories", async (req, res) => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "categories"));
+      const categories = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      res.json(categories);
+    } catch (error: any) {
+      console.error("API Error (categories):", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // --- ADMIN API ROUTES ---
+
+  // Add a new category
+  server.post("/api/categories", async (req, res) => {
+    try {
+      const categoryData = {
+        ...req.body,
+        createdAt: serverTimestamp(),
+      };
+      const docRef = await addDoc(collection(db, "categories"), categoryData);
+      res.status(201).json({ id: docRef.id, ...categoryData });
+    } catch (error: any) {
+      console.error("Admin API Error (add category):", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update a category
+  server.put("/api/categories/:id", async (req, res) => {
+    try {
+      const categoryRef = doc(db, "categories", req.params.id);
+      await updateDoc(categoryRef, {
+        ...req.body,
+        updatedAt: serverTimestamp(),
+      });
+      res.json({ message: "Category updated successfully" });
+    } catch (error: any) {
+      console.error("Admin API Error (update category):", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Delete a category
+  server.delete("/api/categories/:id", async (req, res) => {
+    try {
+      await deleteDoc(doc(db, "categories", req.params.id));
+      res.json({ message: "Category deleted successfully" });
+    } catch (error: any) {
+      console.error("Admin API Error (delete category):", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // Add a new product
   server.post("/api/products", async (req, res) => {
