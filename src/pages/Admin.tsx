@@ -16,6 +16,7 @@ import {
   Filter,
   LogOut,
   Upload,
+  ShieldCheck,
   Image as ImageIcon,
   Zap,
   ArrowUpRight,
@@ -58,7 +59,8 @@ const Admin = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string, type: 'product' | 'category' } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string, type: 'product' | 'category' | 'user' | 'order' } | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [editingCategory, setEditingCategory] = useState<any>(null);
@@ -251,12 +253,34 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteUser = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'users', id));
+      setDeleteConfirm(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `users/${id}`);
+    }
+  };
+
+  const handleDeleteOrder = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'orders', id));
+      setDeleteConfirm(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `orders/${id}`);
+    }
+  };
+
   const confirmDelete = () => {
     if (!deleteConfirm) return;
     if (deleteConfirm.type === 'product') {
       handleDeleteProduct(deleteConfirm.id);
-    } else {
+    } else if (deleteConfirm.type === 'category') {
       handleDeleteCategory(deleteConfirm.id);
+    } else if (deleteConfirm.type === 'user') {
+      handleDeleteUser(deleteConfirm.id);
+    } else if (deleteConfirm.type === 'order') {
+      handleDeleteOrder(deleteConfirm.id);
     }
   };
 
@@ -277,6 +301,29 @@ const Admin = () => {
     await signOut(auth);
     navigate('/');
   };
+
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredCategories = categories.filter(c => 
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredOrders = orders.filter(o => 
+    o.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredUsers = users.filter(u => 
+    u.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -346,7 +393,7 @@ const Admin = () => {
       {/* Main Content */}
       <main className="flex-grow p-12 overflow-y-auto relative z-10 custom-scrollbar">
         <header className="flex justify-between items-end mb-16">
-          <div>
+          <div className="flex-grow">
             <span className="text-[10px] font-black uppercase tracking-[0.4em] text-brand-primary mb-2 block">System Command</span>
             <h2 className="text-5xl font-black uppercase tracking-tighter text-glow">
               {activeTab === 'dashboard' && 'Neural Overview'}
@@ -357,12 +404,25 @@ const Admin = () => {
             </h2>
           </div>
           
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest animate-pulse">
-              {error}
-              <button onClick={() => setError(null)} className="ml-4 text-white/50 hover:text-white">X</button>
+          <div className="flex items-center gap-6">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-brand-primary transition-colors" size={16} />
+              <input 
+                type="text"
+                placeholder="Search Matrix..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-14 w-64 glass-dark rounded-2xl pl-12 pr-6 text-xs font-black uppercase tracking-widest border border-white/5 focus:border-brand-primary/50 focus:ring-1 focus:ring-brand-primary/50 transition-all outline-none"
+              />
             </div>
-          )}
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-500 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest animate-pulse">
+                {error}
+                <button onClick={() => setError(null)} className="ml-4 text-white/50 hover:text-white">X</button>
+              </div>
+            )}
+          </div>
           
           {activeTab === 'products' && (
             <button 
@@ -475,6 +535,39 @@ const Admin = () => {
                       ))}
                     </div>
                   </div>
+
+                  <div className="glass-dark rounded-[2.5rem] p-10 border border-white/5">
+                    <h3 className="text-xl font-black uppercase tracking-widest mb-8 flex items-center gap-3">
+                      <ShieldCheck size={20} className="text-red-500" /> System Cleanup
+                    </h3>
+                    <div className="space-y-6">
+                      <p className="text-xs text-white/50 uppercase tracking-widest leading-relaxed">
+                        Search and terminate specific entities from the matrix.
+                      </p>
+                      <div className="flex gap-4">
+                        <input 
+                          type="text"
+                          placeholder="Entity Name (e.g. Maitri Gajera)"
+                          className="flex-grow h-14 glass-dark rounded-2xl px-6 text-xs font-black uppercase tracking-widest border border-white/5 outline-none focus:border-red-500/50 transition-all"
+                          id="cleanup-search"
+                        />
+                        <button 
+                          onClick={() => {
+                            const name = (document.getElementById('cleanup-search') as HTMLInputElement).value.trim().toLowerCase();
+                            if (!name) return;
+                            const user = users.find(u => u.displayName?.toLowerCase().includes(name));
+                            const order = orders.find(o => o.customerName?.toLowerCase().includes(name));
+                            if (user) setDeleteConfirm({ id: user.id, type: 'user' });
+                            else if (order) setDeleteConfirm({ id: order.id, type: 'order' });
+                            else setError(`Entity matching "${name}" not found in current logs.`);
+                          }}
+                          className="px-8 h-14 bg-red-500 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-600 transition-all shadow-xl"
+                        >
+                          Terminate
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -492,7 +585,7 @@ const Admin = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {products.map((product) => (
+                    {filteredProducts.map((product) => (
                       <tr key={product.id} className="hover:bg-white/5 transition-colors group">
                         <td className="px-10 py-6">
                           <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/10 group-hover:border-brand-primary/50 transition-colors">
@@ -555,7 +648,7 @@ const Admin = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {categories.map((cat) => (
+                    {filteredCategories.map((cat) => (
                       <tr key={cat.id} className="hover:bg-white/5 transition-colors group">
                         <td className="px-10 py-6">
                           <div className="w-24 h-16 rounded-2xl overflow-hidden border border-white/10 group-hover:border-brand-primary/50 transition-colors">
@@ -601,7 +694,7 @@ const Admin = () => {
 
             {activeTab === 'orders' && (
               <div className="grid grid-cols-1 gap-6">
-                {orders.map((order) => (
+                {filteredOrders.map((order) => (
                   <div key={order.id} className="glass-dark p-10 rounded-[2.5rem] border border-white/5 flex flex-col md:flex-row justify-between gap-10 hover:border-brand-primary/30 transition-all group relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/5 blur-[80px] pointer-events-none" />
                     
@@ -647,6 +740,12 @@ const Admin = () => {
                             {btn.icon}
                           </button>
                         ))}
+                        <button 
+                          onClick={() => setDeleteConfirm({ id: order.id, type: 'order' })}
+                          className="w-14 h-14 glass-dark flex items-center justify-center rounded-2xl transition-all border border-white/5 text-red-500 hover:bg-red-500/10"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                       </div>
                       <button className="text-[10px] font-black uppercase tracking-widest text-brand-primary flex items-center gap-2 group/link">
                         View Full Manifest <ArrowUpRight size={14} className="group-hover/link:translate-x-1 group-hover/link:-translate-y-1 transition-transform" />
@@ -665,11 +764,11 @@ const Admin = () => {
                       <th className="px-10 py-6">Entity</th>
                       <th className="px-10 py-6">Communication</th>
                       <th className="px-10 py-6">Clearance</th>
-                      <th className="px-10 py-6 text-right">Initialization Date</th>
+                      <th className="px-10 py-6 text-right">Operations</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {users.map((user) => (
+                    {filteredUsers.map((user) => (
                       <tr key={user.id} className="hover:bg-white/5 transition-colors group">
                         <td className="px-10 py-6">
                           <div className="flex items-center gap-4">
@@ -689,10 +788,15 @@ const Admin = () => {
                             {user.role || 'Standard'}
                           </span>
                         </td>
-                        <td className="px-10 py-6 text-right">
-                          <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">
-                            {user.createdAt ? new Date(user.createdAt.seconds * 1000).toLocaleDateString() : 'Unknown'}
-                          </span>
+                        <td className="px-10 py-6">
+                          <div className="flex justify-end">
+                            <button 
+                              onClick={() => setDeleteConfirm({ id: user.id, type: 'user' })}
+                              className="w-10 h-10 glass-dark flex items-center justify-center text-red-400 hover:bg-red-400 hover:text-white rounded-xl transition-all border border-white/5"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
